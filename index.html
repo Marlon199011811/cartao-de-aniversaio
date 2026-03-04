@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cartão de Aniversário - Editável</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #e8f4f8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    gap: 24px;
+    min-height: 100vh;
+  }
+
+  h1 { font-size: 1.2rem; color: #2a6fa8; font-weight: 700; letter-spacing: 1px; }
+
+  .editor-panel {
+    background: white; border-radius: 16px; padding: 20px 24px;
+    display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 700px;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 180px; }
+  .field label { font-size: 0.75rem; font-weight: 700; color: #2a6fa8; text-transform: uppercase; letter-spacing: 0.5px; }
+  .field input[type="text"], .field textarea {
+    border: 2px solid #d0e8f5; border-radius: 8px; padding: 8px 12px;
+    font-family: 'Nunito', sans-serif; font-size: 0.9rem; color: #333;
+    outline: none; transition: border-color 0.2s; resize: vertical;
+  }
+  .field input[type="text"]:focus, .field textarea:focus { border-color: #2a6fa8; }
+  .field input[type="file"] { font-size: 0.82rem; color: #555; cursor: pointer; }
+  .btn-download {
+    background: #2a6fa8; color: white; border: none; border-radius: 10px;
+    padding: 10px 22px; font-family: 'Nunito', sans-serif; font-weight: 700;
+    font-size: 0.9rem; cursor: pointer; transition: background 0.2s, transform 0.1s;
+    white-space: nowrap; align-self: flex-end;
+  }
+  .btn-download:hover { background: #1a5080; transform: translateY(-1px); }
+
+  /* CARD */
+  #card {
+    width: 480px; min-height: 640px;
+    background: linear-gradient(160deg, #c8e8f8 0%, #dff1fb 40%, #b8ddf0 100%);
+    border-radius: 24px; position: relative; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 28px 20px 32px;
+    box-shadow: 0 8px 40px rgba(30,100,160,0.18);
+  }
+  #card::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(circle, #7bbce0 1px, transparent 1px);
+    background-size: 28px 28px; opacity: 0.2; pointer-events: none;
+  }
+
+  /* CONFETTI */
+  #confetti-canvas {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none; z-index: 10;
+  }
+
+  /* BALLOONS */
+  .balloons-left, .balloons-right {
+    position: absolute; top: 20px;
+    display: flex; flex-direction: column; gap: 4px; z-index: 5;
+  }
+  .balloons-left { left: 3px; }
+  .balloons-right { right: 3px; }
+
+  .balloon {
+    width: 46px; height: 56px;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    position: relative;
+    filter: drop-shadow(2px 3px 5px rgba(0,0,0,0.22));
+    animation: floatB 3s ease-in-out infinite alternate;
+  }
+  .balloon:nth-child(2) { animation-delay: .4s; }
+  .balloon:nth-child(3) { animation-delay: .8s; }
+  .balloon:nth-child(5) { animation-delay: .6s; }
+  .balloon:nth-child(6) { animation-delay: 1s; }
+
+  @keyframes floatB {
+    from { transform: translateY(0) rotate(-2deg); }
+    to   { transform: translateY(-7px) rotate(2deg); }
+  }
+
+  .balloon::after {
+    content: ''; position: absolute;
+    bottom: -10px; left: 50%; transform: translateX(-50%);
+    width: 1.5px; height: 13px; background: #999;
+  }
+  .balloon::before {
+    content: ''; position: absolute;
+    top: 26%; left: 26%; width: 10px; height: 10px;
+    background: rgba(255,255,255,0.42); border-radius: 50%;
+    transform: rotate(-30deg);
+  }
+
+  .b-red    { background: radial-gradient(circle at 35% 30%, #ff8a80, #c62828); }
+  .b-orange { background: radial-gradient(circle at 35% 30%, #ffcc80, #e65100); }
+  .b-yellow { background: radial-gradient(circle at 35% 30%, #fff176, #f9a825); }
+  .b-green  { background: radial-gradient(circle at 35% 30%, #a5d6a7, #2e7d32); }
+  .b-blue   { background: radial-gradient(circle at 35% 30%, #90caf9, #1565c0); }
+  .b-purple { background: radial-gradient(circle at 35% 30%, #ce93d8, #6a1b9a); }
+  .b-pink   { background: radial-gradient(circle at 35% 30%, #f48fb1, #ad1457); }
+  .b-teal   { background: radial-gradient(circle at 35% 30%, #80deea, #00695c); }
+  .b-lime   { background: radial-gradient(circle at 35% 30%, #e6ee9c, #558b2f); }
+  .b-gold   { background: radial-gradient(circle at 35% 30%, #ffe082, #e65100); }
+
+  .ribbon {
+    width: 5px; height: 48px; border-radius: 3px;
+    margin: 2px auto; opacity: 0.75;
+  }
+  .ribbon-l { background: linear-gradient(180deg,#c62828,#6a1b9a); transform: rotate(-10deg); }
+  .ribbon-r { background: linear-gradient(180deg,#1565c0,#2e7d32); transform: rotate(10deg); }
+
+  /* POLAROID */
+  .polaroid-wrap {
+    z-index: 6; position: relative;
+    display: flex; flex-direction: column; align-items: center;
+    margin-top: 8px; width: 310px;
+  }
+  .feliz-text {
+    font-family: 'Dancing Script', cursive; font-size: 2.8rem; color: #1a5a8a;
+    line-height: 1.1; margin-left: 20px;
+    align-self: flex-start; text-shadow: 1px 1px 0 rgba(255,255,255,0.5); z-index: 7;
+    position: relative; z-index: 8;
+  }
+  .polaroid {
+    background: white; padding: 10px 10px 38px 10px;
+    box-shadow: 4px 8px 24px rgba(0,0,0,0.15), -2px -2px 8px rgba(255,255,255,0.6);
+    transform: rotate(-1.5deg); width: 290px;
+  }
+  /* Photo canvas inside polaroid */
+  .photo-frame {
+    width: 270px; height: 300px;
+    position: relative; overflow: hidden; display: block;
+    background: #e0e0e0;
+  }
+  #photoCanvas {
+    width: 270px; height: 300px;
+    display: block; cursor: grab;
+  }
+  #photoCanvas:active { cursor: grabbing; }
+  .drag-hint {
+    position: absolute; bottom: 6px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.45); color: #fff;
+    font-size: 0.65rem; padding: 3px 8px; border-radius: 10px;
+    pointer-events: none; white-space: nowrap; letter-spacing: 0.3px;
+    transition: opacity 0.4s;
+  }
+  .aniversario-text {
+    font-family: 'Dancing Script', cursive; font-size: 2.2rem; color: #1a5a8a;
+    line-height: 1.1; margin-right: 20px;
+    align-self: flex-end; text-shadow: 1px 1px 0 rgba(255,255,255,0.5); z-index: 8;
+  }
+
+  /* BOTTOM */
+  .bottom-text { z-index: 6; text-align: center; margin-top: 20px; padding: 0 24px; }
+  .msg-text { font-size: 1rem; color: #1a4a70; font-weight: 600; line-height: 1.5; margin-bottom: 10px; }
+  .parabens-text { font-family: 'Dancing Script', cursive; font-size: 2rem; color: #1a4a70; font-weight: 700; }
+
+  .photo-placeholder {
+    width: 270px; height: 320px;
+    background: linear-gradient(135deg, #d0e8f5, #a8cce0);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; color: #4a8ab0; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+  }
+  .photo-placeholder svg { opacity: 0.5; }
+</style>
+</head>
+<body>
+
+<h1>🎂 Editor de Cartão de Aniversário</h1>
+
+<div class="editor-panel">
+  <div class="field">
+    <label>📷 Foto central</label>
+    <input type="file" id="photoInput" accept="image/*" onchange="updatePhoto(event)">
+  </div>
+  <div class="field">
+    <label>✍️ Palavra 1</label>
+    <input type="text" id="felizInput" value="feliz" oninput="updateText()">
+  </div>
+  <div class="field">
+    <label>✍️ Palavra 2</label>
+    <input type="text" id="anivInput" value="Aniversário" oninput="updateText()">
+  </div>
+  <div class="field">
+    <label>💬 Mensagem</label>
+    <textarea id="msgInput" rows="2" oninput="updateText()">Que cada momento deste dia seja repleto de amor, alegria e surpresas maravilhosas.</textarea>
+  </div>
+  <div class="field">
+    <label>🎉 Parabéns para</label>
+    <input type="text" id="nomeInput" value="Parabéns Andersson!" oninput="updateText()">
+  </div>
+  <button class="btn-download" onclick="downloadCard()">⬇ Baixar Imagem</button>
+</div>
+
+<div id="card">
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="balloons-left">
+    <div class="balloon b-red"></div>
+    <div class="balloon b-yellow"></div>
+    <div class="balloon b-pink"></div>
+    <div class="ribbon ribbon-l"></div>
+    <div class="balloon b-orange"></div>
+    <div class="balloon b-lime"></div>
+  </div>
+
+  <div class="balloons-right">
+    <div class="balloon b-purple"></div>
+    <div class="balloon b-teal"></div>
+    <div class="balloon b-blue"></div>
+    <div class="ribbon ribbon-r"></div>
+    <div class="balloon b-green"></div>
+    <div class="balloon b-gold"></div>
+  </div>
+
+  <div class="polaroid-wrap">
+    <div class="feliz-text" id="felizDisplay">feliz</div>
+    <div class="polaroid">
+      <div class="photo-frame" id="photoFrame">
+        <canvas id="photoCanvas" width="270" height="300"></canvas>
+        <div class="drag-hint" id="dragHint" style="display:none">✥ arraste para reposicionar</div>
+        <div class="photo-placeholder" id="photoPlaceholder" onclick="document.getElementById('photoInput').click()">
+          <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <path d="M21 15l-5-5L5 21"/>
+          </svg>
+          Clique para adicionar foto
+        </div>
+      </div>
+    <div class="aniversario-text" id="anivDisplay">Aniversário</div>
+  </div>
+
+  <div class="bottom-text">
+    <p class="msg-text" id="msgDisplay">Que cada momento deste dia seja repleto de amor, alegria e surpresas maravilhosas.</p>
+    <p class="parabens-text" id="nomeDisplay">Parabéns Andersson!</p>
+  </div>
+</div>
+
+<script>
+  /* ── CONFETTI ── */
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  const COLORS = ['#ff4757','#ffa502','#2ed573','#1e90ff','#ff6b81','#eccc68','#a29bfe','#fd79a8','#55efc4','#fdcb6e','#e17055','#6c5ce7'];
+  let pieces = [];
+  let W, H;
+
+  function resizeCanvas() {
+    const card = document.getElementById('card');
+    W = canvas.width  = card.offsetWidth;
+    H = canvas.height = card.offsetHeight;
+  }
+
+  function spawnPiece() {
+    const shapes = ['rect','circle','star'];
+    return {
+      x: Math.random() * W,
+      y: -12,
+      w: 5 + Math.random() * 9,
+      h: 8 + Math.random() * 10,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      rot: Math.random() * Math.PI * 2,
+      vx: (Math.random() - 0.5) * 2.2,
+      vy: 1.4 + Math.random() * 2.2,
+      vr: (Math.random() - 0.5) * 0.12,
+      shape: shapes[Math.floor(Math.random() * shapes.length)],
+      alpha: 0.8 + Math.random() * 0.2
+    };
+  }
+
+  function drawStar(cx, cy, r) {
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a1 = (i * 4 * Math.PI / 5) - Math.PI / 2;
+      const a2 = ((i * 4 + 2) * Math.PI / 5) - Math.PI / 2;
+      if (i === 0) ctx.moveTo(cx + r * Math.cos(a1), cy + r * Math.sin(a1));
+      else ctx.lineTo(cx + r * Math.cos(a1), cy + r * Math.sin(a1));
+      ctx.lineTo(cx + (r * 0.4) * Math.cos(a2), cy + (r * 0.4) * Math.sin(a2));
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawPiece(p) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.alpha;
+    if (p.shape === 'rect') {
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+    } else if (p.shape === 'circle') {
+      ctx.beginPath();
+      ctx.arc(0, 0, p.w/2, 0, Math.PI*2);
+      ctx.fill();
+    } else {
+      drawStar(0, 0, p.w/1.5);
+    }
+    ctx.restore();
+  }
+
+  /* Get bounds of an element relative to the card canvas */
+  function getBounds(el, padding = 4) {
+    const cR = document.getElementById('card').getBoundingClientRect();
+    const eR = el.getBoundingClientRect();
+    return {
+      x: eR.left - cR.left - padding,
+      y: eR.top  - cR.top  - padding,
+      w: eR.width  + padding * 2,
+      h: eR.height + padding * 2
+    };
+  }
+
+  let frame = 0;
+  function animate() {
+    ctx.clearRect(0, 0, W, H);
+    frame++;
+    if (pieces.length < 90 && frame % 3 === 0) pieces.push(spawnPiece());
+    pieces = pieces.filter(p => p.y < H + 20);
+    pieces.forEach(p => { p.x += p.vx; p.y += p.vy; p.rot += p.vr; });
+
+    /* Clip: full card MINUS polaroid and bottom-text rectangles (evenodd punches holes) */
+    const polaroidEl  = document.querySelector('.polaroid');
+    const bottomEl    = document.querySelector('.bottom-text');
+    const felizEl     = document.querySelector('.feliz-text');
+    const anivEl      = document.querySelector('.aniversario-text');
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, W, H);
+    if (polaroidEl) { const b = getBounds(polaroidEl, 6); ctx.rect(b.x, b.y, b.w, b.h); }
+    if (bottomEl)   { const b = getBounds(bottomEl,   8); ctx.rect(b.x, b.y, b.w, b.h); }
+    if (felizEl)    { const b = getBounds(felizEl,     4); ctx.rect(b.x, b.y, b.w, b.h); }
+    if (anivEl)     { const b = getBounds(anivEl,      4); ctx.rect(b.x, b.y, b.w, b.h); }
+    ctx.clip('evenodd');
+
+    pieces.forEach(p => drawPiece(p));
+    ctx.restore();
+
+    requestAnimationFrame(animate);
+  }
+
+  resizeCanvas();
+  for (let i = 0; i < 50; i++) {
+    const p = spawnPiece();
+    p.y = Math.random() * H;
+    pieces.push(p);
+  }
+  animate();
+  window.addEventListener('resize', resizeCanvas);
+
+  /* ── PHOTO CANVAS WITH DRAG ── */
+  const photoCanvas = document.getElementById('photoCanvas');
+  const pCtx = photoCanvas.getContext('2d');
+  const PW = 270, PH = 300;
+  let photoImg = null;
+  let imgW = 0, imgH = 0;        // natural image size
+  let offsetX = 0, offsetY = 0;  // top-left draw offset
+  let dragging = false, startX = 0, startY = 0, startOX = 0, startOY = 0;
+  let hintTimer = null;
+
+  function clampOffset() {
+    const scale = Math.max(PW / imgW, PH / imgH); // cover scale
+    const dw = imgW * scale, dh = imgH * scale;
+    const minX = PW - dw, minY = PH - dh;
+    offsetX = Math.min(0, Math.max(minX, offsetX));
+    offsetY = Math.min(0, Math.max(minY, offsetY));
+  }
+
+  function drawPhoto() {
+    if (!photoImg) return;
+    pCtx.clearRect(0, 0, PW, PH);
+    const scale = Math.max(PW / imgW, PH / imgH);
+    const dw = imgW * scale, dh = imgH * scale;
+    pCtx.imageSmoothingEnabled = true;
+    pCtx.imageSmoothingQuality = 'high';
+    pCtx.drawImage(photoImg, offsetX, offsetY, dw, dh);
+  }
+
+  function showHint() {
+    const hint = document.getElementById('dragHint');
+    hint.style.display = 'block'; hint.style.opacity = '1';
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(() => { hint.style.opacity = '0'; setTimeout(() => hint.style.display='none', 400); }, 2500);
+  }
+
+  /* Mouse drag */
+  photoCanvas.addEventListener('mousedown', e => {
+    if (!photoImg) return;
+    dragging = true; startX = e.clientX; startY = e.clientY;
+    startOX = offsetX; startOY = offsetY;
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    offsetX = startOX + (e.clientX - startX);
+    offsetY = startOY + (e.clientY - startY);
+    clampOffset(); drawPhoto();
+  });
+  window.addEventListener('mouseup', () => { dragging = false; });
+
+  /* Touch drag */
+  photoCanvas.addEventListener('touchstart', e => {
+    if (!photoImg) return;
+    dragging = true;
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+    startOX = offsetX; startOY = offsetY;
+    e.preventDefault();
+  }, { passive: false });
+  window.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    offsetX = startOX + (e.touches[0].clientX - startX);
+    offsetY = startOY + (e.touches[0].clientY - startY);
+    clampOffset(); drawPhoto();
+  });
+  window.addEventListener('touchend', () => { dragging = false; });
+
+  function updatePhoto(ev) {
+    const file = ev.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        photoImg = img;
+        imgW = img.naturalWidth; imgH = img.naturalHeight;
+        /* Center the image initially */
+        const scale = Math.max(PW / imgW, PH / imgH);
+        offsetX = (PW - imgW * scale) / 2;
+        offsetY = (PH - imgH * scale) / 2;
+        document.getElementById('photoPlaceholder').style.display = 'none';
+        showHint();
+        drawPhoto();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* ── TEXT ── */
+  function updateText() {
+    document.getElementById('felizDisplay').textContent = document.getElementById('felizInput').value;
+    document.getElementById('anivDisplay').textContent  = document.getElementById('anivInput').value;
+    document.getElementById('msgDisplay').textContent   = document.getElementById('msgInput').value;
+    document.getElementById('nomeDisplay').textContent  = document.getElementById('nomeInput').value;
+  }
+
+  /* ── DOWNLOAD ── */
+  async function downloadCard() {
+    const btn = document.querySelector('.btn-download');
+    btn.textContent = 'Gerando...'; btn.disabled = true;
+
+    try {
+      /* 1. Hide live canvases so html2canvas captures the HTML layer cleanly */
+      canvas.style.visibility = 'hidden';
+      photoCanvas.style.visibility = 'hidden';
+      await new Promise(r => setTimeout(r, 40));
+
+      const SCALE = 3;
+      const cardEl = document.getElementById('card');
+      const cardW  = cardEl.offsetWidth  * SCALE;
+      const cardH  = cardEl.offsetHeight * SCALE;
+
+      /* 2. Capture HTML card (balloons, text, polaroid frame, background) */
+      const htmlCanvas = await html2canvas(cardEl, {
+        scale: SCALE, useCORS: true, allowTaint: true,
+        backgroundColor: null, logging: false
+      });
+
+      /* 3. Composite everything onto output canvas */
+      const out  = document.createElement('canvas');
+      out.width  = cardW; out.height = cardH;
+      const octx = out.getContext('2d');
+      octx.imageSmoothingEnabled = true;
+      octx.imageSmoothingQuality = 'high';
+
+      /* 3a. HTML layer */
+      octx.drawImage(htmlCanvas, 0, 0);
+
+      /* 3b. Photo at SCALE quality — draw directly from the source image */
+      if (photoImg) {
+        const cR  = cardEl.getBoundingClientRect();
+        const pcR = photoCanvas.getBoundingClientRect();
+        const px  = (pcR.left - cR.left) * SCALE;
+        const py  = (pcR.top  - cR.top)  * SCALE;
+        const pw  = PW * SCALE, ph = PH * SCALE;
+        const dscale = Math.max(PW / imgW, PH / imgH);
+
+        octx.save();
+        octx.beginPath();
+        octx.rect(px, py, pw, ph);
+        octx.clip();
+        octx.imageSmoothingEnabled = true;
+        octx.imageSmoothingQuality = 'high';
+        octx.drawImage(
+          photoImg,
+          px + offsetX * SCALE,
+          py + offsetY * SCALE,
+          imgW * dscale * SCALE,
+          imgH * dscale * SCALE
+        );
+        octx.restore();
+      }
+
+      /* 3c. Confetti layer (already has clipping baked in) */
+      octx.drawImage(canvas, 0, 0, cardW, cardH);
+
+      const link = document.createElement('a');
+      link.download = 'cartao_aniversario.png';
+      link.href = out.toDataURL('image/png', 1.0);
+      link.click();
+    } catch(e) { alert('Erro: ' + e.message); }
+
+    canvas.style.visibility = '';
+    photoCanvas.style.visibility = '';
+    btn.textContent = '⬇ Baixar Imagem'; btn.disabled = false;
+  }
+</script>
+</body>
+</html>

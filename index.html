@@ -163,6 +163,31 @@
     align-self: flex-end; text-shadow: 1px 1px 0 rgba(255,255,255,0.5); z-index: 8;
   }
 
+  /* LOGO AREA */
+  .logo-area {
+    z-index: 6; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    margin-bottom: 10px; min-height: 60px;
+  }
+  .logo-img {
+    max-width: 220px; max-height: 90px;
+    object-fit: contain; display: block;
+    cursor: pointer;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+    transition: transform 0.15s;
+  }
+  .logo-img:hover { transform: scale(1.04); }
+  .logo-placeholder {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px; cursor: pointer; opacity: 0.55;
+    transition: opacity 0.2s;
+  }
+  .logo-placeholder:hover { opacity: 0.85; }
+  .logo-placeholder span {
+    font-size: 0.7rem; color: #2a6fa8; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
   /* BOTTOM */
   .bottom-text { z-index: 6; text-align: center; margin-top: 20px; padding: 0 24px; }
   .msg-text { font-size: 1rem; color: #1a4a70; font-weight: 600; line-height: 1.5; margin-bottom: 10px; }
@@ -182,6 +207,10 @@
 <h1>🎂 Editor de Cartão de Aniversário</h1>
 
 <div class="editor-panel">
+  <div class="field">
+    <label>🏷️ Logo (topo central)</label>
+    <input type="file" id="logoInput" accept="image/*" onchange="updateLogo(event)">
+  </div>
   <div class="field">
     <label>📷 Foto central</label>
     <input type="file" id="photoInput" accept="image/*" onchange="updatePhoto(event)">
@@ -207,6 +236,18 @@
 
 <div id="card">
   <canvas id="confetti-canvas"></canvas>
+
+  <!-- Logo topo -->
+  <div class="logo-area" id="logoArea">
+    <div class="logo-placeholder" id="logoPlaceholder" onclick="document.getElementById('logoInput').click()">
+      <svg width="32" height="32" fill="none" stroke="#2a6fa8" stroke-width="1.5" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="3"/>
+        <path d="M3 9h18M9 21V9"/>
+      </svg>
+      <span>Inserir Logo</span>
+    </div>
+    <img id="logoImg" class="logo-img" src="" alt="Logo" style="display:none" onclick="document.getElementById('logoInput').click()" title="Clique para trocar o logo">
+  </div>
 
   <div class="balloons-left">
     <div class="balloon b-red"></div>
@@ -337,6 +378,7 @@
     const bottomEl    = document.querySelector('.bottom-text');
     const felizEl     = document.querySelector('.feliz-text');
     const anivEl      = document.querySelector('.aniversario-text');
+    const logoAreaEl  = document.querySelector('.logo-area');
 
     ctx.save();
     ctx.beginPath();
@@ -345,6 +387,7 @@
     if (bottomEl)   { const b = getBounds(bottomEl,   8); ctx.rect(b.x, b.y, b.w, b.h); }
     if (felizEl)    { const b = getBounds(felizEl,     4); ctx.rect(b.x, b.y, b.w, b.h); }
     if (anivEl)     { const b = getBounds(anivEl,      4); ctx.rect(b.x, b.y, b.w, b.h); }
+    if (logoAreaEl) { const b = getBounds(logoAreaEl,  6); ctx.rect(b.x, b.y, b.w, b.h); }
     ctx.clip('evenodd');
 
     pieces.forEach(p => drawPiece(p));
@@ -361,6 +404,20 @@
   }
   animate();
   window.addEventListener('resize', resizeCanvas);
+
+  /* ── LOGO ── */
+  function updateLogo(e) {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const logoImg = document.getElementById('logoImg');
+      const logoPlaceholder = document.getElementById('logoPlaceholder');
+      logoImg.src = ev.target.result;
+      logoImg.style.display = 'block';
+      logoPlaceholder.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
 
   /* ── PHOTO CANVAS WITH DRAG ── */
   const photoCanvas = document.getElementById('photoCanvas');
